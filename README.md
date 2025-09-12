@@ -1,4 +1,4 @@
-Liift KPIs — Guide de développement et déploiement
+KPIs Google Sheets dans un Front via ApexCharts — Guide de développement et déploiement
 =================================================
 
 Vue d’ensemble
