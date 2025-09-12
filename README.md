@@ -1,4 +1,4 @@
-KPIs Google Sheets dans un Front via ApexCharts — Guide de développement et déploiement
+Google Sheets data dans un Front via ApexCharts
 =================================================
 
 Vue d’ensemble
