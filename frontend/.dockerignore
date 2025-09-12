@@ -1,0 +1,8 @@
+node_modules
+dist
+npm-debug.log*
+.env.local
+.env.development.local
+.env.production.local
+# Keep project .env so Vite can inject VITE_* during Docker build
+# (no secrets should live here; only VITE_ vars are exposed to client)

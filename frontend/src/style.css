@@ -1,0 +1,27 @@
+:root{
+  --bg:#0f172a; --panel:#111827; --text:#e5e7eb; --muted:#94a3b8; --accent:#22d3ee;
+}
+*{box-sizing:border-box}
+html,body,#app{height:100%}
+body{margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial; background: radial-gradient(1200px 700px at 10% -10%, #0b1220, transparent), var(--bg); color:var(--text)}
+/* No page scroll on desktop; height is computed to fit */
+@media (min-width: 1024px){ body{overflow:hidden} }
+.viewport{height:100vh; display:grid; grid-template-rows: auto 1fr auto;}
+.main{display:grid; place-items:center; min-height:0;}
+.align-top{ align-items: start; justify-items: center; }
+.with-footer-gap{ padding-bottom: 72px; }
+.with-header-gap{ padding-top: 64px; }
+.stack{width:100%; max-width: 1040px; display:grid; grid-template-rows: auto 1fr; gap:16px; padding: 20px; min-height: 0;}
+.container{max-width: 1040px; margin: 0 auto; padding: 0 20px;}
+.card{background:var(--panel); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:18px;}
+/* Let the second card (chart) shrink to fit within the viewport */
+.card.chart{min-height:0; display:flex; flex-direction:column; position:relative}
+h1{margin:0 0 8px 0; font-size:22px}
+.muted{color:var(--muted)}
+.footer{position:fixed; left:0; right:0; bottom:0; height:48px; padding:10px 20px; text-align:center; color:var(--muted); pointer-events:none}
+
+/* Page arrows */
+.nav-arrow{position:fixed; top:50%; transform:translateY(-50%); width:44px; height:44px; display:grid; place-items:center; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#fff; border-radius:12px; cursor:pointer; z-index:20; backdrop-filter: blur(6px)}
+.nav-arrow:hover{background:rgba(255,255,255,0.14)}
+.nav-arrow.left{left:16px}
+.nav-arrow.right{right:16px}
