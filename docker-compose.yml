@@ -1,24 +1,45 @@
+name: smooth-vue-apexcharts-from-gsheet
+
 services:
   backend:
+    container_name: kpis-backend
     build:
       context: ./backend
+      network: host
+      # Uncomment and set if you require a proxy to reach the internet during build
+      # args:
+      #   HTTP_PROXY: http://proxy:3128
+      #   HTTPS_PROXY: http://proxy:3128
+      #   NO_PROXY: localhost,127.0.0.1
     env_file:
       - backend/.env
     ports:
-      - "3001:3001"
+      - "3002:3002"
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     restart: unless-stopped
 
   frontend:
+    container_name: kpis-frontend
     build:
       context: ./frontend
+      network: host
+      # Uncomment if proxy needed during build
+      # args:
+      #   HTTP_PROXY: http://proxy:3128
+      #   HTTPS_PROXY: http://proxy:3128
+      #   NO_PROXY: localhost,127.0.0.1
     # Frontend is a static site served by Nginx
     ports:
-      - "8080:80"
+      - "5173:80"
     depends_on:
       - backend
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     restart: unless-stopped
 
 networks:
   default:
     name: smooth-vue-apexcharts-from-gsheet
-

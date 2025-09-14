@@ -35,7 +35,7 @@
         <LoginCard />
       </div>
     </div>
-    <div class="footer muted" ref="footerRef">Tous droits réservés © 2025 - Made with ❤️ by Liift</div>
+    <div class="footer muted" ref="footerRef">Tous droits réservés © 2025 - Made with ❤️</div>
 
     <button v-if="isAuthenticated" class="nav-arrow left" @click="prevChart" aria-label="Précédent">◀</button>
     <button v-if="isAuthenticated" class="nav-arrow right" @click="nextChart" aria-label="Suivant">▶</button>

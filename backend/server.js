@@ -26,12 +26,12 @@ const db = {
 import { nanoid } from 'nanoid'
 
 const {
-  PORT = 3001,
+  PORT = 3002,
   NODE_ENV = 'development',
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_IDS = '',
   SESSION_SECRET = 'dev_secret',
-  FRONTEND_ORIGIN = 'http://localhost:8080',
+  FRONTEND_ORIGIN = 'http://localhost:5173',
   AUTH_ALLOWED_EMAILS = '',
   AUTH_ALLOWED_DOMAINS = '',
   // Google Sheets via Service Account
@@ -51,6 +51,9 @@ if (!CLIENT_IDS.length) {
 }
 
 const app = express()
+// Behind a TLS-terminating reverse proxy (Nginx/HAProxy), trust the proxy so
+// req.secure reflects X-Forwarded-Proto=https and secure cookies are set.
+app.set('trust proxy', 1)
 const client = new OAuth2Client(CLIENT_IDS[0])
 
 // Service Account JWT client (lazy init)

@@ -1,7 +1,7 @@
 <template>
   <header class="topbar">
     <div class="container topbar-inner">
-      <div class="brand">Liift • KPIs</div>
+      <div class="brand">KPIs Dashboard</div>
       <div class="spacer"></div>
       <div class="actions">
         <div class="avatar" v-if="user?.picture" :title="user?.name || 'Profil'">

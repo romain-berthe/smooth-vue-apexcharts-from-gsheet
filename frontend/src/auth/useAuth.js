@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 
 const storageKey = 'auth.google'
-const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'
+const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3002'
 const user = ref(null)
 const credential = ref('')
 const authError = ref('')

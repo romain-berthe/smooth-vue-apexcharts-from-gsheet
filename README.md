@@ -21,7 +21,7 @@ Prérequis Google Cloud (API & IAM)
 - Google Sheets API
 
 2) Créer un identifiant OAuth 2.0 (type « Client Web »)
-- Renseigner les « Origins JavaScript autorisés » (ex: http://localhost:8080 en dev, https://kpis.example.com en prod)
+- Renseigner les « Origins JavaScript autorisés » (ex: http://localhost:5173 en dev, https://kpis.example.com en prod)
 - Noter le Client ID (à mettre dans `VITE_GOOGLE_CLIENT_ID` côté front et dans `GOOGLE_CLIENT_IDS` côté back)
 
 3) Créer un Compte de Service (Service Account)
@@ -81,7 +81,7 @@ npm install
 npm run dev
 ```
 
-Ouvrir http://localhost:8080
+Ouvrir http://localhost:5173
 
 Déploiement avec Docker
 -----------------------
@@ -98,8 +98,8 @@ docker compose up -d
 ```
 
 3) Accès
-- Frontend (Nginx): http://localhost:8080 (ou votre domaine)
-- Backend health: http://localhost:3001/healthz
+- Frontend (Nginx): http://localhost:5173 (ou votre domaine)
+- Backend health: http://localhost:3002/healthz
 
 Notes de production
 -------------------
@@ -107,6 +107,48 @@ Notes de production
 - Les cookies de session exigent HTTPS en prod (`Secure` + `SameSite=None`)
 - Les variables `VITE_*` sont évaluées au build du frontend: si `VITE_BACKEND_URL` change, rebuild nécessaire
 - Si vous êtes derrière un reverse proxy, exposez 443 au public et laissez Nginx servir l’app en interne
+
+Déploiement derrière un reverse proxy (Nginx / HAProxy / NPM)
+------------------------------------------------------------
+- DNS: créez 2 enregistrements pointant vers votre NAS
+  - `kpis.votre-domaine` (frontend)
+  - `api.kpis.votre-domaine` (backend)
+- Frontend (upstream interne): le conteneur Nginx sert sur `80`, mappé par défaut sur l’hôte `5173` (`5173:80`).
+- Proxy → `http://NAS_LAN_IP:5173` (ou directement `kpis-frontend:80` si le proxy est sur le même réseau Docker)
+- Backend (upstream interne): l’API écoute sur `3002`.
+- Proxy → `http://NAS_LAN_IP:3002` (ou `kpis-backend:3002` si même réseau)
+- TLS: terminez le HTTPS au niveau du reverse proxy (Let’s Encrypt) et proxifiez en HTTP vers les conteneurs.
+- Envs critiques backend (fichier `backend/.env`):
+  - `NODE_ENV=production`
+  - `PORT=3002`
+  - `FRONTEND_ORIGIN=https://kpis.votre-domaine`
+  - `GOOGLE_CLIENT_IDS=<même Client ID que VITE_GOOGLE_CLIENT_ID>`
+  - `AUTH_ALLOWED_EMAILS` ou `AUTH_ALLOWED_DOMAINS` (allowlist obligatoire en prod)
+- Envs frontend (fichier `frontend/.env`, évalué au build):
+  - `VITE_BACKEND_URL=https://api.kpis.votre-domaine`
+  - `VITE_GOOGLE_CLIENT_ID=<Client ID OAuth Web>`
+  - Rebuild requis après changement: `docker compose build --no-cache frontend && docker compose up -d frontend`
+- Backend: l’application est derrière un proxy TLS, `trust proxy` est activé pour que les cookies `Secure` soient bien émis.
+
+Nginx Proxy Manager (exemple)
+- Hôte `kpis.votre-domaine`
+  - Forward Host: `NAS_LAN_IP`, Forward Port: `5173`, Scheme: `http`
+  - SSL: certificat Let’s Encrypt
+- Hôte `api.kpis.votre-domaine`
+  - Forward Host: `NAS_LAN_IP`, Forward Port: `3002`, Scheme: `http`
+  - SSL: certificat Let’s Encrypt
+- Onglet Advanced (si nécessaire):
+  - `proxy_set_header Host $host;`
+  - `proxy_set_header X-Forwarded-Proto $scheme;`
+
+Dépannage proxy
+- 504 Gateway Time-out: l’upstream ciblé est erroné (ex: IP conteneur avec port 5173 → utiliser port 80 si IP conteneur, ou `NAS_IP:5173` si port publié).
+- 401 après login: cookie non posé. Vérifier `FRONTEND_ORIGIN` (https), `NODE_ENV=production`, et que le proxy transmet `Host`/`X-Forwarded-Proto`. Le backend pose un cookie `Secure; SameSite=None` (HTTPS requis).
+- 403 sur `/auth/google`: adresse email/domaine non autorisé → renseigner `AUTH_ALLOWED_EMAILS`/`AUTH_ALLOWED_DOMAINS` et recréer le backend.
+- Audience invalide (401): `GOOGLE_CLIENT_IDS` doit contenir exactement `VITE_GOOGLE_CLIENT_ID`.
+- Vérification rapide CORS (préflight):
+  - `curl -i -X OPTIONS https://api.kpis.votre-domaine/auth/google -H "Origin: https://kpis.votre-domaine" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type"`
+  - Attendu: `Access-Control-Allow-Origin: https://kpis.votre-domaine` et `Access-Control-Allow-Credentials: true`.
 
 Données Google Sheets — modes de lecture
 ----------------------------------------
