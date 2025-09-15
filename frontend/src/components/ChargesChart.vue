@@ -36,14 +36,18 @@ function colEquals(label){
 
 const colYearIdx = computed(() => headerNorm.value.findIndex(h => h.includes('annee') || h.includes('year') || h.includes('date')))
 
+// mapping accepte soit une seule colonne via "label",
+// soit plusieurs colonnes à sommer via "labels".
 const mapping = [
-  { key: 'autres_achats', label: 'Autres achats et charges externes', color: '#60a5fa' },
-  { key: 'charges_sociales', label: 'Charges sociales', color: '#34d399' },
-  { key: 'dotations', label: 'Dotations aux amortissements et dépréciations', color: '#fbbf24' },
-  { key: 'cotisations', label: 'Cotisations', color: '#f472b6' },
-  { key: 'impots_taxes', label: 'Impôts, taxes et versements assimilés', color: '#f87171' },
-  { key: 'autres_charges', label: 'Autres charges', color: '#c084fc' },
-  { key: 'remu_tns', label: 'Rémunération TNS', color: '#22d3ee' },
+  { key: 'autres_achats', label: 'Autres achats et charges externes', color: '#F59E0B' },
+  { key: 'charges_sociales', label: 'Charges sociales', color: '#6366F1' },
+  { key: 'dotations', label: 'Dotations aux amortissements et dépréciations', color: '#EAB308' },
+  // Nouvelle séparation des cotisations
+  { key: 'cotisations_obligatoires', labels: ['Cotisations sociales TNS', 'CSG déductible', 'Cotisations'], display: 'Cotisations obligatoires', color: '#EF4444' },
+  { key: 'cotisations_facultatives', label: 'Cotisations facultatives TNS', display: 'Cotisations facultatives', color: '#EF4444' },
+  { key: 'impots_taxes', label: 'Impôts, taxes et versements assimilés', color: '#6366F1' },
+  { key: 'autres_charges', label: 'Autres charges', color: '#F97316' },
+  { key: 'remu_tns', label: 'Rémunération TNS', color: '#3B82F6' },
 ]
 
 // Palette alignée sur le 1er chart (bleu, vert, orange, rouge), répétée si besoin
@@ -69,7 +73,12 @@ const series = computed(() => {
   const cats = xCategories.value
   if (yIdx < 0 || rows.value.length === 0 || cats.length === 0) return []
 
-  const idxs = mapping.map(m => ({ m, idx: colEquals(m.label) }))
+  const idxs = mapping.map(m => ({
+    m,
+    idx: Array.isArray(m.labels)
+      ? m.labels.map(colEquals)
+      : [colEquals(m.label)],
+  }))
   // Colonne "Total des produits d'exploitation" (nom approché, insensible accents)
   const colProdTotalIdx = headerNorm.value.findIndex(h => h.includes('total') && (h.includes('produit') || h.includes('produits') || h.includes('produ')) && (h.includes('exploitation') || h.includes('exploit')))
   // Construire base années triées pour indexer pIndex/cIndex
@@ -82,7 +91,8 @@ const series = computed(() => {
     if (!y || !byYear.has(y)) continue
     const cur = byYear.get(y)
     for (const {m, idx} of idxs){
-      cur[m.key] += toNumber(r[idx])
+      const sum = idx.reduce((acc, i) => acc + toNumber(r[i]), 0)
+      cur[m.key] += sum
     }
     if (colProdTotalIdx >= 0) {
       produitsByYear.set(y, (produitsByYear.get(y) || 0) + toNumber(r[colProdTotalIdx]))
@@ -94,7 +104,8 @@ const series = computed(() => {
   const chargesSeries = mapping.map((m) => {
     const data = zeroArray()
     yearsSorted.forEach((y, i) => { const idx = i*2 + 1; data[idx] = byYear.get(y)[m.key] })
-    return { name: m.label, data, stack: 'charges' }
+    const name = m.display || m.label
+    return { name, data, stack: 'charges', color: m.color }
   })
   // Produits uniquement sur la position "Produits AAAA" (index pair)
   const produitsSeries = (colProdTotalIdx >= 0) ? (() => {
@@ -108,6 +119,7 @@ const series = computed(() => {
 const options = computed(() => ({
   chart: { type: 'bar', stacked: true, toolbar: { show: false }, foreColor: '#cbd5e1' },
   noData: { text: 'Aucune donnée à afficher', align: 'center', verticalAlign: 'middle', style: { color: '#94a3b8', fontSize: '14px', fontWeight: 600 } },
+  // Palette par défaut (les séries de charges définissent déjà leur couleur)
   colors: palette.value,
   xaxis: { categories: xCategories.value, labels: { style: { colors: '#cbd5e1' } }, title: { text: 'Année', style: { color: '#cbd5e1' } } },
   yaxis: { labels: { formatter: euro, style: { colors: '#cbd5e1' } }, title: { text: '€', style: { color: '#cbd5e1' } } },
